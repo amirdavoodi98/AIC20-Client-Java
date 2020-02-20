@@ -21,6 +21,7 @@ public class AI {
     public void pick(World world) {
         System.out.println("pick started");
 
+
         // preprocess
         Client.Model.Map map = world.getMap();
         rows = map.getRowNum();
