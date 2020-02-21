@@ -1,6 +1,7 @@
 package Client;
 
 import Client.Model.*;
+import Client.utils.Utils;
 
 import java.util.*;
 import java.util.Map;
@@ -21,23 +22,13 @@ public class AI {
     public void pick(World world) {
         System.out.println("pick started");
 
-
         // preprocess
         Client.Model.Map map = world.getMap();
         rows = map.getRowNum();
         cols = map.getColNum();
 
-        List<BaseUnit> allBaseUnits = world.getAllBaseUnits();
-        List<BaseUnit> myDeck = new ArrayList<>();
-
-        // choosing all flying units
-        for (BaseUnit baseUnit : allBaseUnits) {
-            if (baseUnit.isFlying())
-                myDeck.add(baseUnit);
-        }
-
-        // picking the chosen hand - rest of the hand will automatically be filled with random baseUnits
-        world.chooseHand(myDeck);
+        Utils.chooseSpecificHand(world);
+        Utils.chooseRandomHand(world);
 
         //other preprocess
         pathForMyUnits = world.getFriend().getPathsFromPlayer().get(0);
