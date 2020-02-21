@@ -1,9 +1,6 @@
 package Client.utils;
 
-import Client.Model.BaseUnit;
-import Client.Model.Map;
-import Client.Model.Unit;
-import Client.Model.World;
+import Client.Model.*;
 import Client.constants.ConstantsValue;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -158,5 +155,102 @@ public class Utils {
             }
         }
         return presentUnits;
+    }
+
+    public static List<Unit> getAllUnitInPath(Path path) {
+        List<Unit> allUnit = new ArrayList<>();
+        path.getCells().forEach(cell -> {
+            allUnit.addAll(cell.getUnits());
+        });
+        return allUnit;
+    }
+
+    public static List<Unit> getEnemyUnitInPath(World world, Path path) {
+        List<Unit> allUnit = new ArrayList<>();
+        int firstEnemyId = world.getFirstEnemy().getPlayerId();
+        int secondEnemyId = world.getSecondEnemy().getPlayerId();
+        path.getCells().forEach(cell -> {
+            cell.getUnits().forEach(unit -> {
+                if (unit.getPlayerId() == firstEnemyId || unit.getPlayerId() == secondEnemyId) {
+                    allUnit.add(unit);
+                }
+            });
+        });
+        return allUnit;
+    }
+
+    public static HashMap<Path, Integer> computePenaltyForPathsInAttackMode(World world, List<Path> allPath) {
+        HashMap<Path, Integer> result = new HashMap<>();
+        for (Path path : allPath) {
+            if (path.getCells().size() > world.getGameConstants().getMaxTurns() - world.getCurrentTurn()) {
+                result.put(path, Integer.MAX_VALUE);
+                continue;
+            }
+            int[] penalty = new int[]{0};
+            penalty[0] += (path.getCells().size() * ConstantsValue.CELL_PENALTY_RATIO);
+            getEnemyUnitInPath(world, path).forEach(unit -> {
+                penalty[0] += ((unit.getDamageLevel() + unit.getHp()) * ConstantsValue.UNIT_PENALTY_RATIO);
+            });
+            result.put(path, penalty[0]);
+        }
+        return result;
+    }
+
+    public static Path chooseBestPathForAttack(World world) {
+        Path[] selectedPath = new Path[]{null};
+        final int[] minPenalty = new int[]{0};
+        computePenaltyForPathsInAttackMode(world, world.getMe().getPathsFromPlayer()).forEach((path, penalty) -> {
+            if (penalty < minPenalty[0]) {
+                minPenalty[0] = penalty;
+                selectedPath[0] = path;
+            }
+        });
+        return selectedPath[0];
+    }
+
+    public static BaseUnit chooseBestBaseUnitForAttack(World world, Path path) {
+        final Unit[] firstEnemyInPath = {null};
+        int firstEnemyId = world.getFirstEnemy().getPlayerId();
+        int secondEnemyId = world.getSecondEnemy().getPlayerId();
+        path.getCells().forEach(cell -> {
+            cell.getUnits().forEach(unit -> {
+                if (unit.getPlayerId() == firstEnemyId || unit.getPlayerId() == secondEnemyId) {
+                    firstEnemyInPath[0] = unit;
+                }
+            });
+        });
+        if (firstEnemyInPath[0] != null) {
+            BaseUnit baseUnitOfFirstEnemyInPath = findBaseUnitById(world.getAllBaseUnits(), firstEnemyInPath[0].getPlayerId());
+            if (baseUnitOfFirstEnemyInPath != null) {
+                List<BaseUnit> recommendedUnits = ConstantsValue.getAntiEnemyUnit(world.getAllBaseUnits()).get(baseUnitOfFirstEnemyInPath);
+                if (recommendedUnits != null) {
+                    for (BaseUnit baseUnit : recommendedUnits) {
+                        if (world.getMe().getHand().contains(baseUnit)) {
+                            if (baseUnit.getAp() <= world.getMe().getAp()) {
+                                return baseUnit;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+//    public static Path chooseBestPathForDefend(World world) {
+//
+//    }
+//
+//    public static Unit chooseBestUnitForDefend(World world, Path path) {
+//
+//    }
+
+    public static BaseUnit findBaseUnitById(List<BaseUnit> allBaseUnit, int id) {
+        for (BaseUnit baseUnit : allBaseUnit) {
+            if (baseUnit.getTypeId() == id) {
+                return baseUnit;
+            }
+        }
+        return null;
     }
 }

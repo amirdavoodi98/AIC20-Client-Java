@@ -28,7 +28,7 @@ public class AI {
         cols = map.getColNum();
 
         Utils.chooseSpecificHand(world);
-        Utils.chooseRandomHand(world);
+//        Utils.chooseRandomHand(world);
 
         //other preprocess
         pathForMyUnits = world.getFriend().getPathsFromPlayer().get(0);
@@ -38,12 +38,19 @@ public class AI {
         System.out.println("turn started: " + world.getCurrentTurn());
 
         Player myself = world.getMe();
-        int maxAp = world.getGameConstants().getMaxAP();
+//        int maxAp = world.getGameConstants().getMaxAP();
+//        // play all of hand once your ap reaches maximum. if ap runs out, putUnit doesn't do anything
+//        if (myself.getAp() == maxAp) {
+//            for (BaseUnit baseUnit : myself.getHand())
+//                world.putUnit(baseUnit, pathForMyUnits);
+//        }
 
-        // play all of hand once your ap reaches maximum. if ap runs out, putUnit doesn't do anything
-        if (myself.getAp() == maxAp) {
-            for (BaseUnit baseUnit : myself.getHand())
-                world.putUnit(baseUnit, pathForMyUnits);
+        Path path1 = Utils.chooseBestPathForAttack(world);
+        if (path1 != null) {
+            BaseUnit baseUnit = Utils.chooseBestBaseUnitForAttack(world, path1);
+            if (baseUnit != null) {
+                world.putUnit(baseUnit, path1);
+            }
         }
 
         // this code tries to cast the received spell
